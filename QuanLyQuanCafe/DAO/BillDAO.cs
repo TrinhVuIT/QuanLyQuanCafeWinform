@@ -1,10 +1,5 @@
 ﻿using QuanLyQuanCafe.DTO;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace QuanLyQuanCafe.DAO
 {
@@ -29,7 +24,27 @@ namespace QuanLyQuanCafe.DAO
 
                 return bill.Id;
             }
+
             return -1;
+        }
+
+        public void InsertBill(int idTable)
+        {
+            DataProvider.Instance.ExecuteNonQuery("exec USP_InsertBill @idTable", new object[] {idTable});
+        }
+
+        public int GetMaxIdBill()
+        {
+            try
+            {
+                var result = (int)DataProvider.Instance.ExecuteScalar("select Max(Id) from dbo.Bill");
+
+                return result;
+            }
+            catch
+            {
+                return -1;
+            }
         }
     }
 }

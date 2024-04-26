@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
-using System.Runtime.Remoting.Messaging;
 
 namespace QuanLyQuanCafe.DAO
 {

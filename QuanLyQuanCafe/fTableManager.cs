@@ -1,13 +1,8 @@
 ﻿using QuanLyQuanCafe.DAO;
 using QuanLyQuanCafe.DTO;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace QuanLyQuanCafe
@@ -18,9 +13,26 @@ namespace QuanLyQuanCafe
         {
             InitializeComponent();
             LoadTable();
+            LoadCategory();
         }
 
         #region Method
+
+        void LoadCategory()
+        {
+            var listCategory = CategoryDAO.Instance.GetListCategory();
+
+            cbCategory.DataSource = listCategory;
+            cbCategory.DisplayMember = "CategoryName";
+        }
+
+        void LoadFoodByCategoryId(int categoryId)
+        {
+            var listFood = FoodDAO.Instance.GetListFoodByCategoryId(categoryId);
+
+            cbFood.DataSource = listFood;
+            cbFood.DisplayMember = "FoodName";
+        }
         void LoadTable()
         {
             var tableList = TableFoodDAO.Instance.LoadTableList();
@@ -45,9 +57,28 @@ namespace QuanLyQuanCafe
             }
         }
 
-        void ShowBill(int tableId)
+        void ShowBill(int idTable)
         {
+            lsvBill.Items.Clear();
 
+            float totalPriceBill = 0;
+
+            var listMenuBill = MenuBillDAO.Instance.GetListMenuBillByIdTable(idTable);
+
+            foreach (var item in listMenuBill)
+            {
+                ListViewItem lsvItem = new ListViewItem(item.FoodName.ToString());
+                lsvItem.SubItems.Add(item.Count.ToString());
+                lsvItem.SubItems.Add(item.Price.ToString());
+                lsvItem.SubItems.Add(item.TotalPrice.ToString());
+                totalPriceBill += item.TotalPrice;
+
+                lsvBill.Items.Add(lsvItem);
+            }
+            //Định dạng tiền tệ sang tiền việt nam
+            CultureInfo culture = new CultureInfo("vi-VN");
+            
+            txbTotalPriceBill.Text = totalPriceBill.ToString("c", culture);
         }
 
         #endregion
@@ -56,7 +87,8 @@ namespace QuanLyQuanCafe
 
         private void btn_Click(object sender, EventArgs e)
         {
-            int tableId = (sender as Table).Id;
+            int tableId = ((sender as Button).Tag as Table).Id;
+            lsvBill.Tag = (sender as Button).Tag as Table;
             ShowBill(tableId);
         }
 
@@ -76,6 +108,43 @@ namespace QuanLyQuanCafe
             fAdmin fAdmin = new fAdmin();
             fAdmin.ShowDialog();
         }
+        private void cbCategory_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int id = 0;
+
+            ComboBox cb = sender as ComboBox;
+
+            if (cb.SelectedItem == null) return;
+
+            Category category = cb.SelectedItem as Category;
+
+            id = category.Id;
+
+            LoadFoodByCategoryId(id);
+        }
+
+        private void btnAddFood_Click(object sender, EventArgs e)
+        {
+            var table = lsvBill.Tag as Table;
+
+            int idBill = BillDAO.Instance.GetUncheckBillIdByTableId(table.Id);
+            int idFood = (cbFood.SelectedItem as Food).Id;
+            int count = (int)nmFoodCount.Value;
+
+            if(idBill == -1)
+            {
+                BillDAO.Instance.InsertBill(table.Id);
+
+                BillInfoDAO.Instance.InsertBillInfo(BillDAO.Instance.GetMaxIdBill(), idFood, count);
+            }
+            else
+            {
+                BillInfoDAO.Instance.InsertBillInfo(idBill, idFood, count);
+            }
+
+            ShowBill(table.Id);
+        }
         #endregion
+
     }
 }
