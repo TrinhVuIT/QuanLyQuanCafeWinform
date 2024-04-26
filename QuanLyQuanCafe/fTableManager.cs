@@ -35,6 +35,7 @@ namespace QuanLyQuanCafe
         }
         void LoadTable()
         {
+            flpTable.Controls.Clear();
             var tableList = TableFoodDAO.Instance.LoadTableList();
             foreach (var table in tableList)
             {
@@ -143,6 +144,26 @@ namespace QuanLyQuanCafe
             }
 
             ShowBill(table.Id);
+
+            LoadTable();
+        }
+        private void btnCheckOut_Click(object sender, EventArgs e)
+        {
+            var table = lsvBill.Tag as Table;
+
+            int idBill = BillDAO.Instance.GetUncheckBillIdByTableId(table.Id);
+
+            if(idBill != -1)
+            {
+               if(MessageBox.Show("Bạn có chắc chắn muốn thanh toán hóa đơn bàn " + table.Name, "Thống báo", MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    BillDAO.Instance.CheckOut(idBill);
+
+                    ShowBill(table.Id);
+
+                    LoadTable();
+                }
+            }
         }
         #endregion
 
